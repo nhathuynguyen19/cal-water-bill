@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hóa Đơn Tiền Nước</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            color: #000;
+            background-color: #fff;
+        }
+        .invoice-container {
+            border: 1px solid #000;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 20px;
+            color: #000;
+        }
+        .header p {
+            margin: 3px 0;
+            color: #333;
+        }
+        .input-section, .output-section {
+            margin: 15px 0;
+        }
+        .input-group {
+            margin: 8px 0;
+        }
+        .input-group label {
+            display: inline-block;
+            width: 100px;
+            font-weight: bold;
+            color: #000;
+        }
+        .input-group input {
+            padding: 5px;
+            width: 80px;
+            border: 1px solid #000;
+            border-radius: 3px;
+        }
+        .hoa-don-list {
+            margin-left: 10px;
+        }
+        .hoa-don-item {
+            border: 1px dashed #000;
+            padding: 8px;
+            margin: 8px 0;
+            background-color: #fff;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #000;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #333;
+        }
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .result-table th, .result-table td {
+            border: 1px solid #000;
+            padding: 6px;
+            text-align: right;
+            word-wrap: break-word;
+        }
+        .result-table th {
+            background-color: #ddd;
+            text-align: center;
+        }
+        .result-table .total {
+            font-weight: bold;
+            background-color: #eee;
+        }
+        .numpad {
+            display: none;
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #fff;
+            border: 1px solid #000;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        .numpad button {
+            width: 40px;
+            height: 40px;
+            margin: 2px;
+            font-size: 16px;
+            text-align: left;
+            padding-left: 10px;
+            background-color: #fff;
+            color: #000;
+            border: 1px solid #000;
+            border-radius: 3px;
+        }
+        .numpad button:hover {
+            background-color: #ddd;
+        }
+
+        /* Responsive design cho di động */
+        @media (max-width: 600px) {
+            .invoice-container {
+                padding: 5px;
+            }
+            .input-group label {
+                width: 80px;
+                font-size: 14px;
+            }
+            .input-group input {
+                width: 60px;
+                font-size: 12px;
+            }
+            .result-table {
+                font-size: 12px;
+            }
+            .result-table th, .result-table td {
+                padding: 4px;
+            }
+            .hoa-don-item {
+                padding: 5px;
+            }
+            .numpad {
+                padding: 5px;
+            }
+            .numpad button {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+                padding-left: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <div class="header">
+            <h1>HÓA ĐƠN TIỀN NƯỚC</h1>
+            <p>Công ty Cấp Nước XYZ</p>
+            <p>Ngày lập: <span id="currentDate"></span></p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <label>Số lượng hóa đơn:</label>
+                <input type="number" id="soHoaDon" min="1" onfocus="showNumpad(this)">
+            </div>
+            <div class="input-group">
+                <label>Hóa đơn tổng:</label>
+                <input type="number" id="tongSoCu" min="0" placeholder="Số cũ" onfocus="showNumpad(this)">
+                <input type="number" id="tongSoMoi" min="0" placeholder="Số mới" onfocus="showNumpad(this)">
+            </div>
+            <div id="hoaDonInputs" class="hoa-don-list"></div>
+            <button onclick="tinhToan()">Tính Hóa Đơn</button>
+        </div>
+
+        <div class="output-section" id="ketQua"></div>
+    </div>
+
+    <div class="numpad" id="numpad">
+        <button onclick="numpadInput('1')">1</button>
+        <button onclick="numpadInput('2')">2</button>
+        <button onclick="numpadInput('3')">3</button><br>
+        <button onclick="numpadInput('4')">4</button>
+        <button onclick="numpadInput('5')">5</button>
+        <button onclick="numpadInput('6')">6</button><br>
+        <button onclick="numpadInput('7')">7</button>
+        <button onclick="numpadInput('8')">8</button>
+        <button onclick="numpadInput('9')">9</button><br>
+        <button onclick="numpadInput('0')">0</button>
+        <button onclick="numpadInput('back')">⌫</button>
+        <button onclick="hideNumpad()">X</button>
+    </div>
+
+    <script>
+        // Hiển thị ngày hiện tại
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('vi-VN');
+
+        class HoaDon {
+            constructor(ten, soCu, soMoi) {
+                this.ten = ten;
+                this.soCu = soCu;
+                this.soMoi = soMoi;
+                this.chenhLech = 0;
+            }
+
+            getChenhLech() {
+                return this.chenhLech;
+            }
+
+            setChenhLech(cl) {
+                this.chenhLech = cl;
+            }
+
+            klTieuThu() {
+                return this.soMoi - this.soCu;
+            }
+
+            thanhTien() {
+                return 10094.947511 * (this.klTieuThu() + this.chenhLech);
+            }
+        }
+
+        let danhSachHoaDon = [];
+        let activeInput = null;
+
+        document.getElementById('soHoaDon').addEventListener('change', function() {
+            const n = parseInt(this.value);
+            const container = document.getElementById('hoaDonInputs');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < n; i++) {
+                container.innerHTML += `
+                    <div class="hoa-don-item">
+                        <strong>Hóa đơn ${i + 1}</strong><br>
+                        <label>Tên: </label>
+                        <input type="text" id="ten${i}" placeholder="Tên hóa đơn"><br>
+                        <label>Số cũ: </label>
+                        <input type="number" id="soCu${i}" min="0" placeholder="Số cũ" onfocus="showNumpad(this)">
+                        <label>Số mới: </label>
+                        <input type="number" id="soMoi${i}" min="0" placeholder="Số mới" onfocus="showNumpad(this)">
+                    </div>
+                `;
+            }
+        });
+
+        function showNumpad(input) {
+            activeInput = input;
+            document.getElementById('numpad').style.display = 'block';
+        }
+
+        function hideNumpad() {
+            document.getElementById('numpad').style.display = 'none';
+            activeInput = null;
+        }
+
+        function numpadInput(value) {
+            if (!activeInput || activeInput.type === 'text') return;
+
+            let currentValue = activeInput.value;
+            if (value === 'back') {
+                activeInput.value = currentValue.slice(0, -1);
+            } else {
+                activeInput.value = currentValue + value;
+            }
+
+            // Kích hoạt sự kiện change thủ công khi nhập số lượng hóa đơn
+            if (activeInput.id === 'soHoaDon') {
+                activeInput.dispatchEvent(new Event('change'));
+            }
+        }
+
+        function tinhToan() {
+            const tongSoCu = parseInt(document.getElementById('tongSoCu').value) || 0;
+            const tongSoMoi = parseInt(document.getElementById('tongSoMoi').value) || 0;
+            const hoaDonTong = new HoaDon("Tổng", tongSoCu, tongSoMoi);
+            
+            const n = parseInt(document.getElementById('soHoaDon').value) || 0;
+            danhSachHoaDon = [];
+            let tempTong = 0;
+
+            for (let i = 0; i < n; i++) {
+                const ten = document.getElementById(`ten${i}`).value || `Hóa đơn ${i + 1}`;
+                const soCu = parseInt(document.getElementById(`soCu${i}`).value) || 0;
+                const soMoi = parseInt(document.getElementById(`soMoi${i}`).value) || 0;
+                const hoaDon = new HoaDon(ten, soCu, soMoi);
+                danhSachHoaDon.push(hoaDon);
+                tempTong += hoaDon.klTieuThu();
+            }
+
+            const chenhLech = (hoaDonTong.klTieuThu() - tempTong) / n;
+            danhSachHoaDon.forEach(hd => hd.setChenhLech(chenhLech));
+
+            let output = `
+                <table class="result-table">
+                    <tr>
+                        <th>Tên</th>
+                        <th>Số cũ</th>
+                        <th>Số mới</th>
+                        <th>Tiêu thụ</th>
+                        <th>Chênh lệch</th>
+                        <th>Thành tiền (VND)</th>
+                    </tr>
+            `;
+            let sum = 0;
+            
+            danhSachHoaDon.forEach((hd) => {
+                const tien = hd.thanhTien();
+                output += `
+                    <tr>
+                        <td style="text-align: left">${hd.ten}</td>
+                        <td>${hd.soCu}</td>
+                        <td>${hd.soMoi}</td>
+                        <td>${hd.klTieuThu()}</td>
+                        <td>${hd.getChenhLech().toFixed(2)}</td>
+                        <td>${tien.toFixed(2)}</td>
+                    </tr>
+                `;
+                sum += tien;
+            });
+            
+            output += `
+                    <tr class="total">
+                        <td colspan="5">Tổng cộng</td>
+                        <td>${sum.toFixed(2)}</td>
+                    </tr>
+                </table>
+            `;
+            
+            document.getElementById('ketQua').innerHTML = output;
+            hideNumpad();
+        }
+    </script>
+</body>
+</html>
